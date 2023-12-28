@@ -35,25 +35,25 @@ namespace Neo.Plugins.RestServer.Helpers
             using var scriptBuilder = new ScriptBuilder();
             scriptBuilder.EmitDynamicCall(scriptHash, method, CallFlags.ReadOnly, args);
             script = scriptBuilder.ToArray();
-            using var engine = ApplicationEngine.Run(script, snapshot, settings: protocolSettings, gas: RestServerSettings.Current.MaxGasInvoke);
+            var engine = ApplicationEngine.Run(script, snapshot, settings: protocolSettings, gas: RestServerSettings.Current.MaxGasInvoke);
             return engine;
         }
 
         public static ApplicationEngine InvokeScript(ReadOnlyMemory<byte> script, Signer[] signers = null, Witness[] witnesses = null)
         {
-            var neosystem = RestServerPlugin.NeoSystem;
-            var snapshot = neosystem.GetSnapshot();
+            var neoSystem = RestServerPlugin.NeoSystem;
+            var snapshot = neoSystem.GetSnapshot();
             Transaction tx = signers == null ? null : new Transaction
             {
                 Version = 0,
                 Nonce = (uint)Random.Shared.Next(),
-                ValidUntilBlock = NativeContract.Ledger.CurrentIndex(snapshot) + neosystem.Settings.MaxValidUntilBlockIncrement,
+                ValidUntilBlock = NativeContract.Ledger.CurrentIndex(snapshot) + neoSystem.Settings.MaxValidUntilBlockIncrement,
                 Signers = signers,
                 Attributes = Array.Empty<TransactionAttribute>(),
                 Script = script,
                 Witnesses = witnesses
             };
-            return ApplicationEngine.Run(script, snapshot, tx, settings: neosystem.Settings, gas: RestServerSettings.Current.MaxGasInvoke);
+            return ApplicationEngine.Run(script, snapshot, tx, settings: neoSystem.Settings, gas: RestServerSettings.Current.MaxGasInvoke);
         }
     }
 }

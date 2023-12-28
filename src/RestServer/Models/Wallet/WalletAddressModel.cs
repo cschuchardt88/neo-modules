@@ -31,7 +31,7 @@ namespace Neo.Plugins.RestServer.Models.Wallet
         /// Public key of the wallet address.
         /// </summary>
         /// <example>03cdb067d930fd5adaa6c68545016044aaddec64ba39e548250eaea551172e535c</example>
-        public ECPoint Publickey { get; set; }
+        public ECPoint PublicKey { get; set; }
         /// <summary>
         /// has a private key or not.
         /// </summary>

@@ -25,7 +25,7 @@ namespace Neo.Plugins.RestServer.Models.Node
         /// <summary>
         /// Description
         /// </summary>
-        /// <example>Enables REST Web Sevices for the node</example>
+        /// <example>Enables REST Web Services for the node</example>
         public string Description { get; set; }
     }
 }

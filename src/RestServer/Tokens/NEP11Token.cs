@@ -26,7 +26,7 @@ namespace Neo.Plugins.RestServer.Tokens
         public string Symbol { get; private set; }
         public byte Decimals { get; private set; }
 
-        private readonly NeoSystem _neosystem;
+        private readonly NeoSystem _neoSystem;
         private readonly DataCache _snapshot;
         private readonly ContractState _contract;
 
@@ -41,8 +41,8 @@ namespace Neo.Plugins.RestServer.Tokens
         {
             ArgumentNullException.ThrowIfNull(neoSystem, nameof(neoSystem));
             ArgumentNullException.ThrowIfNull(scriptHash, nameof(scriptHash));
-            _neosystem = neoSystem;
-            _snapshot = snapshot ?? _neosystem.GetSnapshot();
+            _neoSystem = neoSystem;
+            _snapshot = snapshot ?? _neoSystem.GetSnapshot();
             _contract = NativeContract.ContractManagement.GetContract(_snapshot, scriptHash) ?? throw new ArgumentException(null, nameof(scriptHash));
             if (ContractHelper.IsNep11Supported(_contract) == false)
                 throw new NotSupportedException(nameof(scriptHash));
@@ -53,13 +53,12 @@ namespace Neo.Plugins.RestServer.Tokens
 
         private void Initialize()
         {
-            byte[] scriptBytes;
             using var sb = new ScriptBuilder();
             sb.EmitDynamicCall(_contract.Hash, "decimals", CallFlags.ReadOnly);
             sb.EmitDynamicCall(_contract.Hash, "symbol", CallFlags.ReadOnly);
-            scriptBytes = sb.ToArray();
+            var scriptBytes = sb.ToArray();
 
-            using var appEngine = ApplicationEngine.Run(scriptBytes, _snapshot, settings: _neosystem.Settings, gas: RestServerSettings.Current.MaxGasInvoke);
+            using var appEngine = ApplicationEngine.Run(scriptBytes, _snapshot, settings: _neoSystem.Settings, gas: RestServerSettings.Current.MaxGasInvoke);
             if (appEngine.State != VMState.HALT)
                 throw new NotSupportedException(nameof(ScriptHash));
 
@@ -71,7 +70,7 @@ namespace Neo.Plugins.RestServer.Tokens
         {
             if (ContractHelper.GetContractMethod(_snapshot, ScriptHash, "totalSupply", 0) == null)
                 throw new NotSupportedException(nameof(ScriptHash));
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "totalSupply", out var results))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "totalSupply", out var results))
                 return new(results[0].GetInteger(), Decimals);
             return new(BigInteger.Zero, Decimals);
         }
@@ -80,7 +79,7 @@ namespace Neo.Plugins.RestServer.Tokens
         {
             if (ContractHelper.GetContractMethod(_snapshot, ScriptHash, "balanceOf", 1) == null)
                 throw new NotSupportedException(nameof(ScriptHash));
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "balanceOf", out var results, owner))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "balanceOf", out var results, owner))
                 return new(results[0].GetInteger(), Decimals);
             return new(BigInteger.Zero, Decimals);
         }
@@ -94,7 +93,7 @@ namespace Neo.Plugins.RestServer.Tokens
             ArgumentNullException.ThrowIfNull(tokenId, nameof(tokenId));
             if (tokenId.Length > 64)
                 throw new ArgumentOutOfRangeException(nameof(tokenId));
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "balanceOf", out var results, owner, tokenId))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "balanceOf", out var results, owner, tokenId))
                 return new(results[0].GetInteger(), Decimals);
             return new(BigInteger.Zero, Decimals);
         }
@@ -103,7 +102,7 @@ namespace Neo.Plugins.RestServer.Tokens
         {
             if (ContractHelper.GetContractMethod(_snapshot, ScriptHash, "tokensOf", 1) == null)
                 throw new NotSupportedException(nameof(ScriptHash));
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "tokensOf", out var results, owner))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "tokensOf", out var results, owner))
             {
                 if (results[0].GetInterface<object>() is IIterator iterator)
                 {
@@ -123,12 +122,12 @@ namespace Neo.Plugins.RestServer.Tokens
                 throw new ArgumentOutOfRangeException(nameof(tokenId));
             if (Decimals == 0)
             {
-                if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "ownerOf", out var results, tokenId))
+                if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "ownerOf", out var results, tokenId))
                     return new[] { new UInt160(results[0].GetSpan()) };
             }
             else if (Decimals > 0)
             {
-                if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "ownerOf", out var results, tokenId))
+                if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "ownerOf", out var results, tokenId))
                 {
                     if (results[0].GetInterface<object>() is IIterator iterator)
                     {
@@ -147,7 +146,7 @@ namespace Neo.Plugins.RestServer.Tokens
         {
             if (ContractHelper.GetContractMethod(_snapshot, ScriptHash, "tokens", 0) == null)
                 throw new NotImplementedException();
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "tokens", out var results))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "tokens", out var results))
             {
                 if (results[0].GetInterface<object>() is IIterator iterator)
                 {
@@ -165,7 +164,7 @@ namespace Neo.Plugins.RestServer.Tokens
                 throw new NotImplementedException();
             if (tokenId.Length > 64)
                 throw new ArgumentOutOfRangeException(nameof(tokenId));
-            if (ScriptHelper.InvokeMethod(_neosystem.Settings, _snapshot, ScriptHash, "properties", out var results, tokenId))
+            if (ScriptHelper.InvokeMethod(_neoSystem.Settings, _snapshot, ScriptHash, "properties", out var results, tokenId))
             {
                 if (results[0] is Map map)
                 {

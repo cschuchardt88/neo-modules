@@ -142,7 +142,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         /// <summary>
         /// Get manifest of a smart contract.
         /// </summary>
-        /// <param name="scripthash" example="0xed7cc6f5f2dd842d384f254bc0c2d58fb69a4761">ScriptHash</param>
+        /// <param name="scriptHash" example="0xed7cc6f5f2dd842d384f254bc0c2d58fb69a4761">ScriptHash</param>
         /// <returns>Contract Manifest object.</returns>
         /// <response code="200">Successful</response>
         /// <response code="400">An error occurred. See Response for details.</response>
@@ -150,11 +150,11 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ContractManifest))]
         public IActionResult GetContractManifest(
             [FromRoute(Name = "hash")]
-            UInt160 scripthash)
+            UInt160 scriptHash)
         {
-            var contracts = NativeContract.ContractManagement.GetContract(_neosystem.StoreView, scripthash);
+            var contracts = NativeContract.ContractManagement.GetContract(_neosystem.StoreView, scriptHash);
             if (contracts == null)
-                throw new ContractNotFoundException(scripthash);
+                throw new ContractNotFoundException(scriptHash);
             return Ok(contracts.Manifest);
         }
         /// <summary>

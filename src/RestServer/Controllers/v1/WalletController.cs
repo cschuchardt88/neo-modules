@@ -41,7 +41,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
     {
         internal static WalletSessionManager WalletSessions { get; } = new();
 
-        private readonly NeoSystem _neosystem;
+        private readonly NeoSystem _neoSystem;
 
         /// <summary>
         /// CTOR
@@ -49,7 +49,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         /// <exception cref="NodeNetworkException">Node network doesn't match plugins network.</exception>
         public WalletController()
         {
-            _neosystem = RestServerPlugin.NeoSystem ?? throw new NodeNetworkException();
+            _neoSystem = RestServerPlugin.NeoSystem ?? throw new NodeNetworkException();
         }
 
         /// <summary>
@@ -65,11 +65,11 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             [FromBody]
             WalletOpenModel model)
         {
-            if (new FileInfo(model.Path).DirectoryName.StartsWith(AppContext.BaseDirectory, StringComparison.InvariantCultureIgnoreCase) == false)
+            if (new FileInfo(model.Path).DirectoryName?.StartsWith(AppContext.BaseDirectory, StringComparison.InvariantCultureIgnoreCase) == false)
                 throw new UnauthorizedAccessException(model.Path);
             if (System.IO.File.Exists(model.Path) == false)
                 throw new FileNotFoundException(null, model.Path);
-            var wallet = Wallet.Open(model.Path, model.Password, _neosystem.Settings);
+            var wallet = Wallet.Open(model.Path, model.Password, _neoSystem.Settings);
             if (wallet == null)
                 throw new WalletOpenException($"File '{model.Path}' could not be opened.");
             var sessionId = Guid.NewGuid();
@@ -182,15 +182,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var session = WalletSessions[sessionId];
             session.ResetExpiration();
             var wallet = session.Wallet;
-            WalletAccount account;
-            if (model.Wif == null || model.Wif.Length == 0)
-            {
-                account = wallet.CreateAccount();
-            }
-            else
-            {
-                account = wallet.Import(model.Wif);
-            }
+            var account = string.IsNullOrEmpty(model.Wif) ? wallet.CreateAccount() : wallet.Import(model.Wif);
             if (account == null)
                 throw new WalletException("Account couldn't be created.");
             if (wallet is NEP6Wallet nep6)
@@ -199,7 +191,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             {
                 Address = account.Address,
                 ScriptHash = account.ScriptHash,
-                Publickey = account.GetKey().PublicKey,
+                PublicKey = account.GetKey().PublicKey,
                 HasKey = account.HasKey,
                 Label = account.Label,
                 WatchOnly = account.WatchOnly,
@@ -227,7 +219,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var session = WalletSessions[sessionId];
             session.ResetExpiration();
             var wallet = session.Wallet;
-            var balance = wallet.GetAvailable(_neosystem.StoreView, scriptHash);
+            var balance = wallet.GetAvailable(_neoSystem.StoreView, scriptHash);
             return Ok(new WalletAccountBalanceModel()
             {
                 Balance = balance.Value,
@@ -252,7 +244,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var session = WalletSessions[sessionId];
             session.ResetExpiration();
             var wallet = session.Wallet;
-            using var snapshot = _neosystem.GetSnapshot();
+            using var snapshot = _neoSystem.GetSnapshot();
             uint height = NativeContract.Ledger.CurrentIndex(snapshot) + 1;
             BigInteger gas = BigInteger.Zero;
             foreach (var account in wallet.GetAccounts().Select(s => s.ScriptHash))
@@ -293,7 +285,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             {
                 Address = account.Address,
                 ScriptHash = account.ScriptHash,
-                Publickey = account.GetKey().PublicKey,
+                PublicKey = account.GetKey().PublicKey,
                 HasKey = account.HasKey,
                 Label = account.Label,
                 WatchOnly = account.WatchOnly,
@@ -319,7 +311,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             session.ResetExpiration();
             var wallet = session.Wallet;
             var accounts = new List<WalletAddressModel>();
-            using var snapshot = _neosystem.GetSnapshot();
+            using var snapshot = _neoSystem.GetSnapshot();
             foreach (var account in wallet.GetAccounts())
             {
                 var contract = account.Contract;
@@ -345,7 +337,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
                 {
                     Address = account.Address,
                     ScriptHash = account.ScriptHash,
-                    Publickey = account.GetKey()?.PublicKey,
+                    PublicKey = account.GetKey()?.PublicKey,
                     HasKey = account.HasKey,
                     Type = type,
                     Label = account.Label,
@@ -388,7 +380,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         }
 
         /// <summary>
-        /// Trasnsfer assets from one wallet address to another address on the blockchain.
+        /// Transfer assets from one wallet address to another address on the blockchain.
         /// </summary>
         /// <param name="sessionId" example="066843daf5ce45aba803587780998cdb">Session Id of the open/created wallet.</param>
         /// <param name="model"></param>
@@ -408,10 +400,10 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var session = WalletSessions[sessionId];
             session.ResetExpiration();
             var wallet = session.Wallet;
-            using var snapshot = _neosystem.GetSnapshot();
+            using var snapshot = _neoSystem.GetSnapshot();
             try
             {
-                var descriptor = new AssetDescriptor(snapshot, _neosystem.Settings, model.AssetId);
+                var descriptor = new AssetDescriptor(snapshot, _neoSystem.Settings, model.AssetId);
                 var amount = new BigDecimal(model.Amount, descriptor.Decimals);
                 if (amount.Sign <= 0)
                     throw new WalletException($"Invalid Amount.");
@@ -433,12 +425,12 @@ namespace Neo.Plugins.RestServer.Controllers.v1
                 var totalFees = new BigDecimal((BigInteger)(tx.SystemFee + tx.NetworkFee), NativeContract.GAS.Decimals);
                 if (totalFees.Value > RestServerSettings.Current.MaxTransactionFee)
                     throw new WalletException("The transaction fees are to much.");
-                var context = new ContractParametersContext(snapshot, tx, _neosystem.Settings.Network);
+                var context = new ContractParametersContext(snapshot, tx, _neoSystem.Settings.Network);
                 wallet.Sign(context);
                 if (context.Completed == false)
                     throw new WalletException("Transaction could not be completed at this time.");
                 tx.Witnesses = context.GetWitnesses();
-                _neosystem.Blockchain.Tell(tx);
+                _neoSystem.Blockchain.Tell(tx);
                 return Ok(tx);
             }
             catch (Exception ex)
@@ -460,9 +452,9 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             [FromBody]
             WalletCreateModel model)
         {
-            if (new FileInfo(model.Path).DirectoryName.StartsWith(AppContext.BaseDirectory, StringComparison.InvariantCultureIgnoreCase) == false)
+            if (new FileInfo(model.Path).DirectoryName?.StartsWith(AppContext.BaseDirectory, StringComparison.InvariantCultureIgnoreCase) == false)
                 throw new UnauthorizedAccessException(model.Path);
-            var wallet = Wallet.Create(model.Name, model.Path, model.Password, _neosystem.Settings);
+            var wallet = Wallet.Create(model.Name, model.Path, model.Password, _neoSystem.Settings);
             if (wallet == null)
                 throw new WalletException("Wallet files in that format are not supported, please use a .json or .db3 file extension.");
             if (string.IsNullOrEmpty(model.Wif) == false)
@@ -478,7 +470,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         }
 
         /// <summary>
-        /// Import multi-signature addresss into the wallet.
+        /// Import multi-signature address into the wallet.
         /// </summary>
         /// <param name="sessionId" example="066843daf5ce45aba803587780998cdb">Session Id of the open/created wallet.</param>
         /// <param name="model"></param>
@@ -517,7 +509,7 @@ namespace Neo.Plugins.RestServer.Controllers.v1
                 nep6.Save();
             return Ok(new WalletMultiSignContractModel
             {
-                Address = multiSignContract.ScriptHash.ToAddress(_neosystem.Settings.AddressVersion),
+                Address = multiSignContract.ScriptHash.ToAddress(_neoSystem.Settings.AddressVersion),
                 ScriptHash = multiSignContract.ScriptHash,
                 Script = multiSignContract.Script,
             });
@@ -548,9 +540,9 @@ namespace Neo.Plugins.RestServer.Controllers.v1
                     Address = account.Address,
                     ScriptHash = account.ScriptHash,
                     PublicKey = account.GetKey()?.PublicKey,
-                    Neo = wallet.GetBalance(_neosystem.StoreView, NativeContract.NEO.Hash, account.ScriptHash).Value,
+                    Neo = wallet.GetBalance(_neoSystem.StoreView, NativeContract.NEO.Hash, account.ScriptHash).Value,
                     NeoHash = NativeContract.NEO.Hash,
-                    Gas = wallet.GetBalance(_neosystem.StoreView, NativeContract.GAS.Hash, account.ScriptHash).Value,
+                    Gas = wallet.GetBalance(_neoSystem.StoreView, NativeContract.GAS.Hash, account.ScriptHash).Value,
                     GasHash = NativeContract.GAS.Hash,
                 });
             return Ok(assets);
@@ -574,14 +566,15 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var session = WalletSessions[sessionId];
             var wallet = session.Wallet;
             session.ResetExpiration();
-            var keys = new List<WalletKeyModel>();
-            foreach (var account in wallet.GetAccounts().Where(w => w.HasKey))
-                keys.Add(new()
+            var keys = wallet.GetAccounts()
+                .Where(w => w.HasKey)
+                .Select(account => new WalletKeyModel()
                 {
                     Address = account.Address,
                     ScriptHash = account.ScriptHash,
                     PublicKey = account.GetKey().PublicKey,
-                });
+                })
+                .ToList();
             return Ok(keys);
         }
 
@@ -653,19 +646,16 @@ namespace Neo.Plugins.RestServer.Controllers.v1
             var appEngine = ScriptHelper.InvokeScript(model.Script, signers);
             if (appEngine.State != VM.VMState.HALT)
                 throw new ApplicationEngineException(appEngine.FaultException?.InnerException?.Message ?? appEngine.FaultException?.Message ?? string.Empty);
-            var tx = wallet.MakeTransaction(_neosystem.StoreView, model.Script, model.From, signers, maxGas: RestServerSettings.Current.MaxGasInvoke);
+            var tx = wallet.MakeTransaction(_neoSystem.StoreView, model.Script, model.From, signers, maxGas: RestServerSettings.Current.MaxGasInvoke);
             try
             {
-                var context = new ContractParametersContext(_neosystem.StoreView, tx, _neosystem.Settings.Network);
+                var context = new ContractParametersContext(_neoSystem.StoreView, tx, _neoSystem.Settings.Network);
                 wallet.Sign(context);
                 if (context.Completed == false)
                     throw new WalletException($"Incomplete signature: {context}");
-                else
-                {
-                    tx.Witnesses = context.GetWitnesses();
-                    _neosystem.Blockchain.Tell(tx);
-                    return Ok(tx);
-                }
+                tx.Witnesses = context.GetWitnesses();
+                _neoSystem.Blockchain.Tell(tx);
+                return Ok(tx);
             }
             catch (Exception ex)
             {

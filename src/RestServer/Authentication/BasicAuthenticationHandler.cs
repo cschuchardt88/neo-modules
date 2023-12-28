@@ -8,16 +8,15 @@
 // Redistribution and use in source and binary forms with or without
 // modifications are permitted.
 
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Neo.Plugins.RestServer;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace RestServer.Authentication
+namespace Neo.Plugins.RestServer.Authentication
 {
     internal class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {

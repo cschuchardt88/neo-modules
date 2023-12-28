@@ -118,8 +118,8 @@ namespace Neo.Plugins.RestServer.Controllers.v1
         public IActionResult GetCurrentBlockHeader()
         {
             var currentIndex = NativeContract.Ledger.CurrentIndex(_neosystem.StoreView);
-            var blockheader = NativeContract.Ledger.GetHeader(_neosystem.StoreView, currentIndex);
-            return Ok(blockheader);
+            var blockHeader = NativeContract.Ledger.GetHeader(_neosystem.StoreView, currentIndex);
+            return Ok(blockHeader);
         }
 
         /// <summary>

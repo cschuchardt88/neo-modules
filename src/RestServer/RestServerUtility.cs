@@ -88,9 +88,9 @@ namespace Neo.Plugins.RestServer
                                 {
                                     if (item.Type != JTokenType.Object)
                                         continue;
-                                    var vprops = ((JObject)item).Properties();
-                                    var keyProps = vprops.SingleOrDefault(s => s.Name.Equals("key", StringComparison.InvariantCultureIgnoreCase));
-                                    var keyValueProps = vprops.SingleOrDefault(s => s.Name.Equals("value", StringComparison.InvariantCultureIgnoreCase));
+                                    var vProps = ((JObject)item).Properties().ToArray();
+                                    var keyProps = vProps.SingleOrDefault(s => s.Name.Equals("key", StringComparison.InvariantCultureIgnoreCase));
+                                    var keyValueProps = vProps.SingleOrDefault(s => s.Name.Equals("value", StringComparison.InvariantCultureIgnoreCase));
                                     if (keyProps == null && keyValueProps == null)
                                         continue;
                                     var key = (PrimitiveType)StackItemFromJToken(keyProps?.Value);

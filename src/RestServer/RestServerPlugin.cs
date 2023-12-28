@@ -17,7 +17,7 @@ namespace Neo.Plugins.RestServer
     public partial class RestServerPlugin : Plugin
     {
         public override string Name => "RestServer";
-        public override string Description => "Enables REST Web Sevices for the node";
+        public override string Description => "Enables REST Web Services for the node";
 
         #region Globals
 

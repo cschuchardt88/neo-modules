@@ -28,17 +28,13 @@ namespace Neo.Plugins.RestServer.Helpers
         public static bool IsNep17Supported(DataCache snapshot, UInt160 scriptHash)
         {
             var contractState = NativeContract.ContractManagement.GetContract(snapshot, scriptHash);
-            if (contractState == null)
-                return false;
-            return IsNep17Supported(contractState);
+            return contractState != null && IsNep17Supported(contractState);
         }
 
         public static bool IsNep11Supported(DataCache snapshot, UInt160 scriptHash)
         {
             var contractState = NativeContract.ContractManagement.GetContract(snapshot, scriptHash);
-            if (contractState == null)
-                return false;
-            return IsNep11Supported(contractState);
+            return contractState != null && IsNep11Supported(contractState);
         }
 
         public static bool IsNep17Supported(ContractState contractState) =>
@@ -50,9 +46,7 @@ namespace Neo.Plugins.RestServer.Helpers
         public static ContractMethodDescriptor GetContractMethod(DataCache snapshot, UInt160 scriptHash, string method, int pCount)
         {
             var contractState = NativeContract.ContractManagement.GetContract(snapshot, scriptHash);
-            if (contractState == null)
-                return null;
-            return contractState.Manifest.Abi.GetMethod(method, pCount);
+            return contractState?.Manifest.Abi.GetMethod(method, pCount);
         }
     }
 }

@@ -34,10 +34,10 @@ using Neo.Plugins.RestServer.Models.Error;
 using Neo.Plugins.RestServer.Providers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using RestServer.Authentication;
 using System.Net.Mime;
 using System.Net.Security;
 using System.Numerics;
+using Neo.Plugins.RestServer.Authentication;
 
 namespace Neo.Plugins.RestServer
 {
@@ -118,7 +118,7 @@ namespace Neo.Plugins.RestServer
                                     .WithMethods("GET", "POST");
                                     // The CORS specification states that setting origins to "*" (all origins)
                                     // is invalid if the Access-Control-Allow-Credentials header is present.
-                                    //.AllowCredentials() 
+                                    //.AllowCredentials()
                                 });
                             });
                         else
@@ -271,14 +271,14 @@ namespace Neo.Plugins.RestServer
 
                             #endregion
 
-                            options.DocInclusionPredicate((docmentName, apiDescription) =>
+                            options.DocInclusionPredicate((documentName, apiDescription) =>
                             {
                                 var actionApiVersionModel = apiDescription.ActionDescriptor.GetApiVersionModel(ApiVersionMapping.Explicit | ApiVersionMapping.Implicit);
                                 if (actionApiVersionModel == null)
                                     return true;
                                 if (actionApiVersionModel.DeclaredApiVersions.Any())
-                                    return actionApiVersionModel.DeclaredApiVersions.Any(a => $"v{a}" == docmentName);
-                                return actionApiVersionModel.ImplementedApiVersions.Any(a => $"v{a}" == docmentName);
+                                    return actionApiVersionModel.DeclaredApiVersions.Any(a => $"v{a}" == documentName);
+                                return actionApiVersionModel.ImplementedApiVersions.Any(a => $"v{a}" == documentName);
                             });
 
                             options.UseOneOfForPolymorphism();
@@ -389,7 +389,7 @@ namespace Neo.Plugins.RestServer
                                 Name = exception.GetType().Name,
                                 Message = exception.InnerException?.Message ?? exception.Message,
                             };
-                            RestServerMiddleware.SetServerInfomationHeader(context.Response);
+                            RestServerMiddleware.SetServerInformationHeader(context.Response);
                             context.Response.StatusCode = 400;
                             await context.Response.WriteAsJsonAsync(response);
                         }));
