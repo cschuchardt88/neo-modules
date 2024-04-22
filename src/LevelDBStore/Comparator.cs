@@ -22,54 +22,54 @@ namespace LevelDB
         private sealed class Inner : IDisposable
         {
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            private delegate void Destructor(IntPtr GCHandleThis);
+            private delegate void Destructor(IntPtr gCHandleThis);
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            private delegate int Compare(IntPtr GCHandleThis,
+            private delegate int Compare(IntPtr gCHandleThisg,
                                          IntPtr data1, IntPtr size1,
                                          IntPtr data2, IntPtr size2);
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            private delegate IntPtr Name(IntPtr GCHandleThis);
+            private delegate IntPtr Name(IntPtr gCHandleThis);
 
 
-            private static readonly Destructor destructor
-                = (GCHandleThis) =>
+            private static readonly Destructor s_destructor
+                = (gCHandleThis) =>
                       {
-                          var h = GCHandle.FromIntPtr(GCHandleThis);
-                          var This = (Inner)h.Target;
+                          var h = GCHandle.FromIntPtr(gCHandleThis);
+                          var @this = h.Target as Inner;
 
-                          This.Dispose();
+                          @this.Dispose();
 
                           // TODO: At the point 'Free' is entered, this delegate may become elligible to be GC'd.
                           // TODO:  Need to look whether GC might run between then, and when this delegate returns.
                           h.Free();
                       };
 
-            private static readonly Compare compare =
-                (GCHandleThis, data1, size1, data2, size2) =>
+            private static readonly Compare s_compare =
+                (gCHandleThis, data1, size1, data2, size2) =>
                     {
-                        var This = (Inner)GCHandle.FromIntPtr(GCHandleThis).Target;
-                        return This.cmp(new NativeArray { baseAddr = data1, byteLength = size1 },
-                                        new NativeArray { baseAddr = data2, byteLength = size2 });
+                        var @this = GCHandle.FromIntPtr(gCHandleThis).Target as Inner;
+                        return @this._cmp(new NativeArray { _baseAddr = data1, _byteLength = size1 },
+                                        new NativeArray { _baseAddr = data2, _byteLength = size2 });
                     };
 
-            private static readonly Name nameAccessor =
-                (GCHandleThis) =>
+            private static readonly Name s_nameAccessor =
+                (gCHandleThis) =>
                     {
-                        var This = (Inner)GCHandle.FromIntPtr(GCHandleThis).Target;
-                        return This.NameValue;
+                        var @this = GCHandle.FromIntPtr(gCHandleThis).Target as Inner;
+                        return @this.NameValue;
                     };
 
-            private Func<NativeArray, NativeArray, int>? cmp;
-            private GCHandle namePinned;
+            private Func<NativeArray, NativeArray, int> _cmp;
+            private GCHandle _namePinned;
 
             public IntPtr Init(string name, Func<NativeArray, NativeArray, int> cmp)
             {
                 // TODO: Complete member initialization
-                this.cmp = cmp;
+                this._cmp = cmp;
 
-                this.namePinned = GCHandle.Alloc(
+                this._namePinned = GCHandle.Alloc(
                     Encoding.ASCII.GetBytes(name),
                     GCHandleType.Pinned);
 
@@ -77,12 +77,12 @@ namespace LevelDB
 
                 var chandle = LevelDBInterop.leveldb_comparator_create(
                     GCHandle.ToIntPtr(thisHandle),
-                    Marshal.GetFunctionPointerForDelegate(destructor),
-                    Marshal.GetFunctionPointerForDelegate(compare),
-                    Marshal.GetFunctionPointerForDelegate(nameAccessor)
+                    Marshal.GetFunctionPointerForDelegate(s_destructor),
+                    Marshal.GetFunctionPointerForDelegate(s_compare),
+                    Marshal.GetFunctionPointerForDelegate(s_nameAccessor)
                     );
 
-                if (chandle == default(IntPtr))
+                if (chandle == default)
                     thisHandle.Free();
                 return chandle;
             }
@@ -92,7 +92,7 @@ namespace LevelDB
                 get
                 {
                     // TODO: this is probably not the most effective way to get a pinned string
-                    var s = ((byte[])this.namePinned.Target);
+                    var s = ((byte[])this._namePinned.Target);
                     fixed (byte* p = s)
                     {
                         // Note: pinning the GCHandle ensures this value should remain stable 
@@ -104,8 +104,8 @@ namespace LevelDB
 
             public void Dispose()
             {
-                if (this.namePinned.IsAllocated)
-                    this.namePinned.Free();
+                if (this._namePinned.IsAllocated)
+                    this._namePinned.Free();
             }
         }
 
@@ -118,7 +118,7 @@ namespace LevelDB
             }
             finally
             {
-                if (this.Handle == default(IntPtr))
+                if (this.Handle == default)
                     inner.Dispose();
             }
         }
@@ -134,7 +134,7 @@ namespace LevelDB
 
         protected override void FreeUnManagedObjects()
         {
-            if (this.Handle != default(IntPtr))
+            if (this.Handle != default)
             {
                 // indirectly invoked CleanupInner
                 LevelDBInterop.leveldb_comparator_destroy(this.Handle);

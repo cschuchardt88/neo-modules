@@ -18,51 +18,51 @@ namespace Neo.Plugins.Storage
 {
     internal class Store : IStore
     {
-        private readonly DB db;
+        private readonly DB _db;
 
         public Store(string path)
         {
-            this.db = new DB(new Options { CreateIfMissing = true, }, path);
+            this._db = new DB(new Options { CreateIfMissing = true, }, path);
         }
 
         public void Delete(byte[] key)
         {
-            db.Delete(key, WriteOptions.Default);
+            _db.Delete(key, WriteOptions.Default);
         }
 
         public void Dispose()
         {
-            db.Dispose();
+            _db.Dispose();
         }
 
         public IEnumerable<(byte[], byte[])> Seek(byte[] prefix, SeekDirection direction = SeekDirection.Forward)
         {
-            return db.Seek(ReadOptions.Default, prefix, direction, (k, v) => (k, v));
+            return _db.Seek(ReadOptions.Default, prefix, direction, (k, v) => (k, v));
         }
 
         public ISnapshot GetSnapshot()
         {
-            return new Snapshot(db);
+            return new Snapshot(_db);
         }
 
         public void Put(byte[] key, byte[] value)
         {
-            db.Put(key, value, WriteOptions.Default);
+            _db.Put(key, value, WriteOptions.Default);
         }
 
         public void PutSync(byte[] key, byte[] value)
         {
-            db.Put(key, value, WriteOptions.SyncWrite);
+            _db.Put(key, value, WriteOptions.SyncWrite);
         }
 
         public bool Contains(byte[] key)
         {
-            return db.Contains(key, ReadOptions.Default);
+            return _db.Contains(key, ReadOptions.Default);
         }
 
-        public byte[]? TryGet(byte[] key)
+        public byte[] TryGet(byte[] key)
         {
-            return db.Get(key, ReadOptions.Default);
+            return _db.Get(key, ReadOptions.Default);
         }
     }
 }

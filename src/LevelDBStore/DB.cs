@@ -24,11 +24,12 @@ namespace LevelDB
     /// </summary>
     public class DB : LevelDBHandle, IEnumerable<KeyValuePair<string, string>>, IEnumerable<KeyValuePair<byte[], byte[]>>, IEnumerable<KeyValuePair<int, int[]>>
     {
-        public static Encoding DefaultEncoding = Encoding.UTF8;
+        private static readonly Encoding s_uTF8 = Encoding.UTF8;
+        public readonly static Encoding DefaultEncoding = s_uTF8;
 
-        private readonly Cache _Cache;
-        private readonly Logger _InfoLog;
-        private readonly Comparator _Comparator;
+        private readonly Cache _cache;
+        private readonly Logger _infoLog;
+        private readonly Comparator _comparator;
         private readonly Encoding _encoding;
 
         static void Throw(IntPtr error)
@@ -62,11 +63,10 @@ namespace LevelDB
         /// </summary>
         public DB(Options options, string name, Encoding encoding)
         {
-            IntPtr error;
-            this._Cache = options.Cache;
-            this._InfoLog = options.InfoLog;
-            this._Comparator = options.Comparator;
-            this.Handle = LevelDBInterop.leveldb_open(options.Handle, name, out error);
+            this._cache = options.Cache;
+            this._infoLog = options.InfoLog;
+            this._comparator = options.Comparator;
+            this.Handle = LevelDBInterop.leveldb_open(options.Handle, name, out var error);
             this._encoding = encoding;
 
             Throw(error, msg => new UnauthorizedAccessException(msg));
@@ -108,8 +108,7 @@ namespace LevelDB
         /// </summary>
         public void Put(byte[] key, byte[] value, WriteOptions options)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_put(this.Handle, options.Handle, key, (IntPtr)key.LongLength, value, (IntPtr)value.LongLength, out error);
+            LevelDBInterop.leveldb_put(this.Handle, options.Handle, key, checked((IntPtr)key.LongLength), value, checked((IntPtr)value.LongLength), out var error);
             Throw(error);
         }
 
@@ -128,8 +127,7 @@ namespace LevelDB
         /// </summary>
         public void Put(int key, int[] value, WriteOptions options)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_put(this.Handle, options.Handle, ref key, (IntPtr)sizeof(int), value, checked((IntPtr)(value.LongLength * 4)), out error);
+            LevelDBInterop.leveldb_put(this.Handle, options.Handle, ref key, (IntPtr)sizeof(int), value, checked((IntPtr)(value.LongLength * 4)), out var error);
             Throw(error);
         }
 
@@ -168,8 +166,7 @@ namespace LevelDB
         /// </summary>
         public void Delete(byte[] key, WriteOptions options)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_delete(this.Handle, options.Handle, key, (IntPtr)key.LongLength, out error);
+            LevelDBInterop.leveldb_delete(this.Handle, options.Handle, key, checked((IntPtr)key.LongLength), out var error);
             Throw(error);
         }
 
@@ -180,8 +177,7 @@ namespace LevelDB
 
         public void Write(WriteBatch batch, WriteOptions options)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_write(this.Handle, options.Handle, batch.Handle, out error);
+            LevelDBInterop.leveldb_write(this.Handle, options.Handle, batch.Handle, out var error);
             Throw(error);
         }
 
@@ -189,7 +185,7 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public string? Get(string key, ReadOptions options)
+        public string Get(string key, ReadOptions options)
         {
             var value = Get(_encoding.GetBytes(key), options);
             if (value != null) return _encoding.GetString(value);
@@ -200,7 +196,7 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public string? Get(string key)
+        public string Get(string key)
         {
             return this.Get(key, new ReadOptions());
         }
@@ -209,7 +205,7 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public byte[]? Get(byte[] key)
+        public byte[] Get(byte[] key)
         {
             return this.Get(key, new ReadOptions());
         }
@@ -218,11 +214,9 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public byte[]? Get(byte[] key, ReadOptions options)
+        public byte[] Get(byte[] key, ReadOptions options)
         {
-            IntPtr error;
-            IntPtr length;
-            var v = LevelDBInterop.leveldb_get(this.Handle, options.Handle, key, (IntPtr)key.LongLength, out length, out error);
+            var v = LevelDBInterop.leveldb_get(this.Handle, options.Handle, key, checked((IntPtr)key.LongLength), out var length, out var error);
             Throw(error);
 
             if (v != IntPtr.Zero)
@@ -247,7 +241,7 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public int[]? Get(int key)
+        public int[] Get(int key)
         {
             return Get(key, new ReadOptions());
         }
@@ -256,13 +250,11 @@ namespace LevelDB
         /// If the database contains an entry for "key" return the value,
         /// otherwise return null.
         /// </summary>
-        public int[]? Get(int key, ReadOptions options)
+        public int[] Get(int key, ReadOptions options)
         {
 
-            IntPtr error;
-            IntPtr length;
             IntPtr v;
-            v = LevelDBInterop.leveldb_get(this.Handle, options.Handle, ref key, (IntPtr)sizeof(int), out length, out error);
+            v = LevelDBInterop.leveldb_get(this.Handle, options.Handle, ref key, (IntPtr)sizeof(int), out var length, out var error);
             Throw(error);
 
             if (v != IntPtr.Zero)
@@ -285,8 +277,7 @@ namespace LevelDB
 
         public bool Contains(byte[] key, ReadOptions options)
         {
-            IntPtr error;
-            IntPtr value = LevelDBInterop.leveldb_get(this.Handle, options.Handle, key, (IntPtr)key.Length, out _, out error);
+            var value = LevelDBInterop.leveldb_get(this.Handle, options.Handle, key, (IntPtr)key.Length, out _, out var error);
             Throw(error);
 
             if (value != IntPtr.Zero)
@@ -306,8 +297,6 @@ namespace LevelDB
         public NativeArray<T> GetRaw<T>(NativeArray key, ReadOptions options)
             where T : struct
         {
-            IntPtr error;
-            IntPtr length;
 
             var handle = new LevelDbFreeHandle();
 
@@ -315,17 +304,17 @@ namespace LevelDB
             var v = (Ptr<T>)LevelDBInterop.leveldb_get(
                 this.Handle,
                 options.Handle,
-                key.baseAddr,
-                key.byteLength,
-                out length,
-                out error);
+                key._baseAddr,
+                key._byteLength,
+                out var length,
+                out _);
 
             handle.SetHandle((IntPtr)v);
 
             // round down, truncating the array slightly if needed
-            var count = (IntPtr)((ulong)length / Ptr<T>.sizeof_T);
+            var count = (IntPtr)((ulong)length / Ptr<T>.SizeofT);
 
-            return new NativeArray<T> { baseAddr = v, count = count, handle = handle };
+            return new NativeArray<T> { _baseAddr = v, _count = count, _handle = handle };
         }
 
         /// <summary>
@@ -370,9 +359,9 @@ namespace LevelDB
         ///  "leveldb.stats" - returns a multi-line string that describes statistics
         ///     about the internal operation of the DB.
         /// </summary>
-        public string? PropertyValue(string name)
+        public string PropertyValue(string name)
         {
-            string? result = null;
+            string result = null;
             var ptr = LevelDBInterop.leveldb_property_value(this.Handle, name);
             if (ptr != IntPtr.Zero)
             {
@@ -396,8 +385,7 @@ namespace LevelDB
         /// </summary>
         public static void Repair(Options options, string name)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_repair_db(options.Handle, name, out error);
+            LevelDBInterop.leveldb_repair_db(options.Handle, name, out var error);
             Throw(error);
         }
 
@@ -407,26 +395,22 @@ namespace LevelDB
         /// </summary>
         public static void Destroy(Options options, string name)
         {
-            IntPtr error;
-            LevelDBInterop.leveldb_destroy_db(options.Handle, name, out error);
+            LevelDBInterop.leveldb_destroy_db(options.Handle, name, out var error);
             Throw(error);
         }
 
         protected override void FreeUnManagedObjects()
         {
-            if (this.Handle != default(IntPtr))
+            if (this.Handle != default)
                 LevelDBInterop.leveldb_close(this.Handle);
 
             // it's critical that the database be closed first, as the logger and cache may depend on it.
 
-            if (this._Cache != null)
-                this._Cache.Dispose();
+            this._cache?.Dispose();
 
-            if (this._Comparator != null)
-                this._Comparator.Dispose();
+            this._comparator?.Dispose();
 
-            if (this._InfoLog != null)
-                this._InfoLog.Dispose();
+            this._infoLog?.Dispose();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -436,43 +420,37 @@ namespace LevelDB
 
         IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator()
         {
-            using (var sn = this.CreateSnapshot())
-            using (var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn }))
+            using var sn = this.CreateSnapshot();
+            using var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn });
+            iterator.SeekToFirst();
+            while (iterator.IsValid())
             {
-                iterator.SeekToFirst();
-                while (iterator.IsValid())
-                {
-                    yield return new KeyValuePair<string, string>(iterator.KeyAsString(), iterator.ValueAsString());
-                    iterator.Next();
-                }
+                yield return new KeyValuePair<string, string>(iterator.KeyAsString(), iterator.ValueAsString());
+                iterator.Next();
             }
         }
 
         public IEnumerator<KeyValuePair<byte[], byte[]>> GetEnumerator()
         {
-            using (var sn = this.CreateSnapshot())
-            using (var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn }))
+            using var sn = this.CreateSnapshot();
+            using var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn });
+            iterator.SeekToFirst();
+            while (iterator.IsValid())
             {
-                iterator.SeekToFirst();
-                while (iterator.IsValid())
-                {
-                    yield return new KeyValuePair<byte[], byte[]>(iterator.Key(), iterator.Value());
-                    iterator.Next();
-                }
+                yield return new KeyValuePair<byte[], byte[]>(iterator.Key(), iterator.Value());
+                iterator.Next();
             }
         }
 
         IEnumerator<KeyValuePair<int, int[]>> IEnumerable<KeyValuePair<int, int[]>>.GetEnumerator()
         {
-            using (var sn = this.CreateSnapshot())
-            using (var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn }))
+            using var sn = this.CreateSnapshot();
+            using var iterator = this.CreateIterator(new ReadOptions { Snapshot = sn });
+            iterator.SeekToFirst();
+            while (iterator.IsValid())
             {
-                iterator.SeekToFirst();
-                while (iterator.IsValid())
-                {
-                    yield return new KeyValuePair<int, int[]>(iterator.KeyAsInt(), iterator.ValueAsInts());
-                    iterator.Next();
-                }
+                yield return new KeyValuePair<int, int[]>(iterator.KeyAsInt(), iterator.ValueAsInts());
+                iterator.Next();
             }
         }
 

@@ -18,21 +18,16 @@ namespace LevelDB.NativePointer
 {
     // note: sizeof(Ptr<>) == sizeof(IntPtr) allows you to create Ptr<Ptr<>> of arbitrary depth and "it just works"
     // IntPtr severely lacks appropriate arithmetic operators; up-promotions to ulong used instead.
-    public struct Ptr<T>
+    public struct Ptr<T>(IntPtr addr)
         where T : struct
     {
-        private IntPtr addr;
-
-        public Ptr(IntPtr addr)
-        {
-            this.addr = addr;
-        }
+        private IntPtr _addr = addr;
 
         // cannot use 'sizeof' operator on generic type parameters
-        public static readonly uint sizeof_T = (uint)Marshal.SizeOf(typeof(T));
-        private static readonly IDeref<T> deref = getDeref();
+        public static readonly uint SizeofT = (uint)Marshal.SizeOf(typeof(T));
+        private static readonly IDeref<T> s_deref = GetDeref();
 
-        private static IDeref<T> getDeref()
+        private static IDeref<T> GetDeref()
         {
             if (typeof(T) == typeof(int))
                 return (IDeref<T>)new IntDeref();
@@ -50,14 +45,14 @@ namespace LevelDB.NativePointer
         }
         public static explicit operator IntPtr(Ptr<T> p)
         {
-            return p.addr;
+            return p._addr;
         }
 
         // operator Ptr<U>(Ptr<T>)
         public static Ptr<U> Cast<U>(Ptr<T> p)
             where U : struct
         {
-            return new Ptr<U>(p.addr);
+            return new Ptr<U>(p._addr);
         }
 
         public void Inc() { Advance((IntPtr)1); }
@@ -65,22 +60,22 @@ namespace LevelDB.NativePointer
 
         public void Advance(IntPtr d)
         {
-            addr = (IntPtr)((ulong)addr + sizeof_T * (ulong)d);
+            _addr = (IntPtr)((ulong)_addr + SizeofT * (ulong)d);
         }
         public readonly IntPtr Diff(Ptr<T> p2)
         {
-            var diff = (long)(((ulong)addr) - ((ulong)p2.addr));
-            Debug.Assert(diff % sizeof_T == 0);
+            var diff = (long)(((ulong)_addr) - ((ulong)p2._addr));
+            Debug.Assert(diff % SizeofT == 0);
 
-            return (IntPtr)(diff / sizeof_T);
+            return checked((IntPtr)(diff / SizeofT));
         }
         public readonly T Deref()
         {
-            return deref.Deref(addr);
+            return s_deref.Deref(_addr);
         }
         public readonly void DerefWrite(T newValue)
         {
-            deref.DerefWrite(addr, newValue);
+            s_deref.DerefWrite(_addr, newValue);
         }
 
         // C-style pointer arithmetic. IntPtr is used in place of C's ptrdiff_t
@@ -125,13 +120,13 @@ namespace LevelDB.NativePointer
         #region comparisons
         public override readonly bool Equals(object obj)
         {
-            if (!(obj is Ptr<T>))
+            if (obj is not Ptr<T>)
                 return false;
             return this == (Ptr<T>)obj;
         }
         public override readonly int GetHashCode()
         {
-            return ((int)addr ^ (int)(IntPtr)((long)addr >> 6));
+            return checked((int)_addr ^ (int)(IntPtr)((long)_addr >> 6));
         }
         public static bool operator ==(Ptr<T> p, Ptr<T> p2)
         {
@@ -162,20 +157,20 @@ namespace LevelDB.NativePointer
         #region pointer/int/long arithmetic (convenience)
         public static Ptr<T> operator +(Ptr<T> p, long offset)
         {
-            return p + (IntPtr)offset;
+            return p + checked((IntPtr)offset);
         }
         public static Ptr<T> operator +(long offset, Ptr<T> p)
         {
-            return p + (IntPtr)offset;
+            return p + checked((IntPtr)offset);
         }
         public static Ptr<T> operator -(Ptr<T> p, long offset)
         {
-            return p - (IntPtr)offset;
+            return p - checked((IntPtr)offset);
         }
         public T this[long offset]
         {
-            get { return this[(IntPtr)offset]; }
-            set { this[(IntPtr)offset] = value; }
+            readonly get { return this[checked((IntPtr)offset)]; }
+            set { this[checked((IntPtr)offset)] = value; }
         }
         #endregion
     }
@@ -183,15 +178,14 @@ namespace LevelDB.NativePointer
     public struct NativeArray
         : IDisposable
     {
-        public IntPtr baseAddr;
-        public IntPtr byteLength;
+        public IntPtr _baseAddr;
+        public IntPtr _byteLength;
 
-        public SafeHandle handle;
+        public SafeHandle _handle;
 
         public readonly void Dispose()
         {
-            if (handle != null)
-                handle.Dispose();
+            _handle?.Dispose();
         }
 
         public static NativeArray<T> FromArray<T>(T[] arr, long start = 0, long count = -1)
@@ -200,7 +194,7 @@ namespace LevelDB.NativePointer
             if (count < 0) count = arr.LongLength - start;
 
             var h = new PinnedSafeHandle<T>(arr);
-            return new NativeArray<T> { baseAddr = h.Ptr + start, count = (IntPtr)count, handle = h };
+            return new NativeArray<T> { _baseAddr = h.Ptr + start, _count = checked((IntPtr)count), _handle = h };
         }
     }
 
@@ -209,84 +203,76 @@ namespace LevelDB.NativePointer
         , IDisposable
         where T : struct
     {
-        public Ptr<T> baseAddr;
-        public IntPtr count;
+        public Ptr<T> _baseAddr;
+        public IntPtr _count;
 
-        public SafeHandle handle;
+        public SafeHandle _handle;
 
         public static implicit operator NativeArray(NativeArray<T> arr)
         {
             return new NativeArray
             {
-                baseAddr = (IntPtr)arr.baseAddr,
-                byteLength = (IntPtr)((ulong)(IntPtr)(arr.baseAddr + arr.count) - (ulong)(IntPtr)(arr.baseAddr)),
-                handle = arr.handle
+                _baseAddr = (IntPtr)arr._baseAddr,
+                _byteLength = (IntPtr)((ulong)(IntPtr)(arr._baseAddr + arr._count) - (ulong)(IntPtr)(arr._baseAddr)),
+                _handle = arr._handle
             };
         }
         public static explicit operator NativeArray<T>(NativeArray arr)
         {
-            var baseAddr = (Ptr<T>)arr.baseAddr;
-            var count = ((Ptr<T>)(IntPtr)((ulong)arr.baseAddr + (ulong)arr.byteLength)) - baseAddr;
+            var baseAddr = (Ptr<T>)arr._baseAddr;
+            var count = ((Ptr<T>)(IntPtr)((ulong)arr._baseAddr + (ulong)arr._byteLength)) - baseAddr;
 
-            return new NativeArray<T> { baseAddr = baseAddr, count = count, handle = arr.handle };
+            return new NativeArray<T> { _baseAddr = baseAddr, _count = count, _handle = arr._handle };
         }
 
         #region IEnumerable
 
         public readonly IEnumerator<T> GetEnumerator()
         {
-            return new Enumerator(baseAddr, baseAddr + count, handle);
+            return new Enumerator(_baseAddr, _baseAddr + _count, _handle);
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        readonly System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return this.GetEnumerator();
         }
 
-        private class Enumerator : IEnumerator<T>
+        private class Enumerator(Ptr<T> start, Ptr<T> end, SafeHandle handle) : IEnumerator<T>
         {
-            private Ptr<T> current;
-            private Ptr<T> end;
-            private int state;
-            private readonly SafeHandle handle;
-
-            public Enumerator(Ptr<T> start, Ptr<T> end, SafeHandle handle)
-            {
-                this.current = start;
-                this.end = end;
-                state = 0;
-                this.handle = handle;
-            }
+            private Ptr<T> _current = start;
+            private Ptr<T> _end = end;
+            private int _state = 0;
+            private readonly SafeHandle _handle = handle;
 
             public void Dispose()
             {
-                GC.KeepAlive(handle);
+                GC.KeepAlive(_handle);
             }
 
             public T Current
             {
                 get
                 {
-                    if (handle != null && handle.IsClosed)
+                    if (_handle != null && _handle.IsClosed)
                         throw new InvalidOperationException("Dereferencing a closed handle");
-                    if (state != 1)
+                    if (_state != 1)
                         throw new InvalidOperationException("Attempt to invoke Current on invalid enumerator");
-                    return current.Deref();
+                    return _current.Deref();
                 }
             }
 
             public bool MoveNext()
             {
-                switch (state)
+                switch (_state)
                 {
                     case 0:
-                        state = 1;
-                        return current != end;
+                        _state = 1;
+                        return _current != _end;
                     case 1:
-                        ++current;
-                        if (current == end)
-                            state = 2;
-                        return current != end;
+                        ++_current;
+                        if (_current == _end)
+                            _state = 2;
+                        return _current != _end;
                     case 2:
                     default:
                         return false;
@@ -308,32 +294,31 @@ namespace LevelDB.NativePointer
 
         public T this[IntPtr offset]
         {
-            get
+            readonly get
             {
-                if ((ulong)offset >= (ulong)count)
+                if ((ulong)offset >= (ulong)_count)
                     throw new IndexOutOfRangeException("offest");
-                var val = baseAddr[offset];
+                var val = _baseAddr[offset];
                 GC.KeepAlive(this);
                 return val;
             }
             set
             {
-                if ((ulong)offset >= (ulong)count)
+                if ((ulong)offset >= (ulong)_count)
                     throw new IndexOutOfRangeException("offest");
-                baseAddr[offset] = value;
+                _baseAddr[offset] = value;
                 GC.KeepAlive(this);
             }
         }
         public T this[long offset]
         {
-            get { return this[(IntPtr)offset]; }
-            set { this[(IntPtr)offset] = value; }
+            readonly get { return this[checked((IntPtr)offset)]; }
+            set { this[checked((IntPtr)offset)] = value; }
         }
 
         public readonly void Dispose()
         {
-            if (handle != null)
-                handle.Dispose();
+            _handle?.Dispose();
         }
     }
 
@@ -347,13 +332,13 @@ namespace LevelDB.NativePointer
     {
         public int Deref(IntPtr addr)
         {
-            int* p = (int*)addr;
+            var p = (int*)addr;
             return *p;
         }
 
         public void DerefWrite(IntPtr addr, int newValue)
         {
-            int* p = (int*)addr;
+            var p = (int*)addr;
             *p = newValue;
         }
     }

@@ -53,7 +53,7 @@ namespace Neo.IO.Data.LevelDB
             }
         }
 
-        internal static byte[]? ToByteArray(this IntPtr data, UIntPtr length)
+        internal static byte[] ToByteArray(this IntPtr data, UIntPtr length)
         {
             if (data == IntPtr.Zero) return null;
             var buffer = new byte[(int)length];
