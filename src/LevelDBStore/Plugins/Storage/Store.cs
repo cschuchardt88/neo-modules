@@ -9,6 +9,7 @@
 // Redistribution and use in source and binary forms with or without
 // modifications are permitted.
 
+using LevelDB;
 using Neo.IO.Data.LevelDB;
 using Neo.Persistence;
 using System.Collections.Generic;
@@ -21,12 +22,12 @@ namespace Neo.Plugins.Storage
 
         public Store(string path)
         {
-            this.db = DB.Open(path, new Options { CreateIfMissing = true, FilterPolicy = Native.leveldb_filterpolicy_create_bloom(15) });
+            this.db = new DB(new Options { CreateIfMissing = true, }, path);
         }
 
         public void Delete(byte[] key)
         {
-            db.Delete(WriteOptions.Default, key);
+            db.Delete(key, WriteOptions.Default);
         }
 
         public void Dispose()
@@ -46,22 +47,22 @@ namespace Neo.Plugins.Storage
 
         public void Put(byte[] key, byte[] value)
         {
-            db.Put(WriteOptions.Default, key, value);
+            db.Put(key, value, WriteOptions.Default);
         }
 
         public void PutSync(byte[] key, byte[] value)
         {
-            db.Put(WriteOptions.SyncWrite, key, value);
+            db.Put(key, value, WriteOptions.SyncWrite);
         }
 
         public bool Contains(byte[] key)
         {
-            return db.Contains(ReadOptions.Default, key);
+            return db.Contains(key, ReadOptions.Default);
         }
 
-        public byte[] TryGet(byte[] key)
+        public byte[]? TryGet(byte[] key)
         {
-            return db.Get(ReadOptions.Default, key);
+            return db.Get(key, ReadOptions.Default);
         }
     }
 }

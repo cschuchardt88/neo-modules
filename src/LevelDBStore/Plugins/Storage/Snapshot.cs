@@ -9,31 +9,31 @@
 // Redistribution and use in source and binary forms with or without
 // modifications are permitted.
 
+using LevelDB;
 using Neo.IO.Data.LevelDB;
 using Neo.Persistence;
 using System.Collections.Generic;
-using LSnapshot = Neo.IO.Data.LevelDB.Snapshot;
 
 namespace Neo.Plugins.Storage
 {
     internal class Snapshot : ISnapshot
     {
         private readonly DB db;
-        private readonly LSnapshot snapshot;
+        private readonly SnapShot snapshot;
         private readonly ReadOptions options;
         private readonly WriteBatch batch;
 
         public Snapshot(DB db)
         {
             this.db = db;
-            this.snapshot = db.GetSnapshot();
+            this.snapshot = db.CreateSnapshot();
             this.options = new ReadOptions { FillCache = false, Snapshot = snapshot };
             this.batch = new WriteBatch();
         }
 
         public void Commit()
         {
-            db.Write(WriteOptions.Default, batch);
+            db.Write(batch);
         }
 
         public void Delete(byte[] key)
@@ -58,12 +58,12 @@ namespace Neo.Plugins.Storage
 
         public bool Contains(byte[] key)
         {
-            return db.Contains(options, key);
+            return db.Contains(key, options);
         }
 
-        public byte[] TryGet(byte[] key)
+        public byte[]? TryGet(byte[] key)
         {
-            return db.Get(options, key);
+            return db.Get(key, options);
         }
     }
 }
