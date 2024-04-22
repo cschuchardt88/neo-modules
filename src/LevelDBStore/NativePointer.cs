@@ -67,18 +67,18 @@ namespace LevelDB.NativePointer
         {
             addr = (IntPtr)((ulong)addr + sizeof_T * (ulong)d);
         }
-        public IntPtr Diff(Ptr<T> p2)
+        public readonly IntPtr Diff(Ptr<T> p2)
         {
             var diff = (long)(((ulong)addr) - ((ulong)p2.addr));
             Debug.Assert(diff % sizeof_T == 0);
 
             return (IntPtr)(diff / sizeof_T);
         }
-        public T Deref()
+        public readonly T Deref()
         {
             return deref.Deref(addr);
         }
-        public void DerefWrite(T newValue)
+        public readonly void DerefWrite(T newValue)
         {
             deref.DerefWrite(addr, newValue);
         }
@@ -114,21 +114,22 @@ namespace LevelDB.NativePointer
         {
             return p.Diff(p2);
         }
-        public T this[IntPtr offset]
+        public readonly T this[IntPtr offset]
         {
             get { return (this + offset).Deref(); }
+
             set { (this + offset).DerefWrite(value); }
         }
         #endregion
 
         #region comparisons
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             if (!(obj is Ptr<T>))
                 return false;
             return this == (Ptr<T>)obj;
         }
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             return ((int)addr ^ (int)(IntPtr)((long)addr >> 6));
         }
@@ -187,7 +188,7 @@ namespace LevelDB.NativePointer
 
         public SafeHandle handle;
 
-        public void Dispose()
+        public readonly void Dispose()
         {
             if (handle != null)
                 handle.Dispose();
@@ -232,7 +233,7 @@ namespace LevelDB.NativePointer
 
         #region IEnumerable
 
-        public IEnumerator<T> GetEnumerator()
+        public readonly IEnumerator<T> GetEnumerator()
         {
             return new Enumerator(baseAddr, baseAddr + count, handle);
         }
@@ -329,7 +330,7 @@ namespace LevelDB.NativePointer
             set { this[(IntPtr)offset] = value; }
         }
 
-        public void Dispose()
+        public readonly void Dispose()
         {
             if (handle != null)
                 handle.Dispose();

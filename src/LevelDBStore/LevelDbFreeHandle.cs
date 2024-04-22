@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2015-2024 The Neo Project.
+// Copyright (C) 2015-2024 The Neo Project.
 //
 // LevelDbFreeHandle.cs file belongs to the neo project and is free
 // software distributed under the MIT software license, see the
@@ -10,7 +10,6 @@
 // modifications are permitted.
 
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 
 namespace LevelDB
@@ -21,27 +20,26 @@ namespace LevelDB
     internal class LevelDbFreeHandle : SafeHandle
     {
         public LevelDbFreeHandle()
-            : base(default(IntPtr), true)
+            : base(default, true)
         {
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         override protected bool ReleaseHandle()
         {
-            if (this.handle != default(IntPtr))
+            if (this.handle != default)
                 LevelDBInterop.leveldb_free(this.handle);
-            this.handle = default(IntPtr);
+            this.handle = default;
             return true;
         }
 
         public override bool IsInvalid
         {
-            get { return this.handle != default(IntPtr); }
+            get { return this.handle != default; }
         }
 
         public new void SetHandle(IntPtr p)
         {
-            if (this.handle != default(IntPtr))
+            if (this.handle != default)
                 ReleaseHandle();
 
             base.SetHandle(p);
