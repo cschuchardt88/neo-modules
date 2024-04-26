@@ -16,8 +16,8 @@ namespace LevelDB
     /// </summary>
     public class WriteOptions : LevelDBHandle
     {
-        public static WriteOptions Default = new WriteOptions();
-        public static WriteOptions SyncWrite = new WriteOptions { Sync = true };
+        public static readonly WriteOptions Default = new WriteOptions();
+        public static readonly WriteOptions SyncWrite = new WriteOptions { Sync = true };
 
         public WriteOptions()
         {

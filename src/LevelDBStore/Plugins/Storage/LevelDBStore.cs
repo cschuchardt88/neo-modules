@@ -28,7 +28,7 @@ namespace Neo.Plugins.Storage
         public IStore GetStore(string path)
         {
             if (Environment.CommandLine.Split(' ').Any(p => p == "/repair" || p == "--repair"))
-                DB.Repair(new Options(), path);
+                DB.Repair(Options.Default, path);
             return new Store(path);
         }
     }

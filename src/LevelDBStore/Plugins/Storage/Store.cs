@@ -12,57 +12,65 @@
 using LevelDB;
 using Neo.IO.Data.LevelDB;
 using Neo.Persistence;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Neo.Plugins.Storage
 {
-    internal class Store : IStore
+    internal class Store : IStore, IEnumerable<KeyValuePair<byte[], byte[]>>
     {
         private readonly DB _db;
 
-        public Store(string path)
+        public Store(string dir)
         {
-            this._db = new DB(new Options { CreateIfMissing = true, }, path);
+            this._db = new(dir, new()
+            {
+                CreateIfMissing = true,
+                // Keep whole blockchain open plus future files
+                // at lease up to block index 10_000_000
+                MaxOpenFiles = 4096,
+                BlockSize = 16 * 1024, // 16K
+                WriteBufferSize = 16 * 1024 * 1024, // 16MB
+                FilterPolicy = 10,
+                CompressionLevel = CompressionLevel.SnappyCompression,
+            });
         }
 
-        public void Delete(byte[] key)
+        public Store(string dir, Options options)
         {
-            _db.Delete(key, WriteOptions.Default);
+            this._db = new DB(dir, options);
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             _db.Dispose();
-        }
 
-        public IEnumerable<(byte[], byte[])> Seek(byte[] prefix, SeekDirection direction = SeekDirection.Forward)
-        {
-            return _db.Seek(ReadOptions.Default, prefix, direction, (k, v) => (k, v));
-        }
+        public ISnapshot GetSnapshot() =>
+            new Snapshot(_db);
 
-        public ISnapshot GetSnapshot()
-        {
-            return new Snapshot(_db);
-        }
+        public void Delete(byte[] key) =>
+            _db.Delete(key, WriteOptions.Default);
 
-        public void Put(byte[] key, byte[] value)
-        {
+        public void Put(byte[] key, byte[] value) =>
             _db.Put(key, value, WriteOptions.Default);
-        }
 
-        public void PutSync(byte[] key, byte[] value)
-        {
+        public void PutSync(byte[] key, byte[] value) =>
             _db.Put(key, value, WriteOptions.SyncWrite);
-        }
 
-        public bool Contains(byte[] key)
-        {
-            return _db.Contains(key, ReadOptions.Default);
-        }
+        public bool Contains(byte[] key) =>
+            _db.Contains(key, ReadOptions.Default);
 
-        public byte[] TryGet(byte[] key)
-        {
-            return _db.Get(key, ReadOptions.Default);
-        }
+        public byte[] TryGet(byte[] key) =>
+            _db.Get(key, ReadOptions.Default);
+
+        public IEnumerable<(byte[], byte[])> Seek(byte[] prefix, SeekDirection direction = SeekDirection.Forward) =>
+            direction == SeekDirection.Forward
+                ? _db.Seek(prefix, ReadOptions.Default)
+                : _db.SeekPrev(prefix, ReadOptions.Default);
+
+        public IEnumerator<KeyValuePair<byte[], byte[]>> GetEnumerator() =>
+            _db.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() =>
+            GetEnumerator();
     }
 }

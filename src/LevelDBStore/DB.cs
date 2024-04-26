@@ -53,15 +53,15 @@ namespace LevelDB
             }
         }
 
-        public DB(Options options, string name)
-            : this(options, name, DefaultEncoding)
+        public DB(string name, Options options)
+            : this(name, DefaultEncoding, options)
         {
         }
 
         /// <summary>
         /// Open the database with the specified "name".
         /// </summary>
-        public DB(Options options, string name, Encoding encoding)
+        public DB(string name, Encoding encoding, Options options)
         {
             this._cache = options.Cache;
             this._infoLog = options.InfoLog;
@@ -198,7 +198,7 @@ namespace LevelDB
         /// </summary>
         public string Get(string key)
         {
-            return this.Get(key, new ReadOptions());
+            return this.Get(key, ReadOptions.Default);
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace LevelDB
         /// </summary>
         public byte[] Get(byte[] key)
         {
-            return this.Get(key, new ReadOptions());
+            return this.Get(key, ReadOptions.Default);
         }
 
         /// <summary>
@@ -223,10 +223,24 @@ namespace LevelDB
             {
                 try
                 {
-                    var bytes = new byte[(long)length];
 
-                    // TODO: consider copy loop, as Marshal.Copy has 2GB-1 limit, or native pointers
-                    Marshal.Copy(v, bytes, 0, checked((int)length));
+                    var len = (long)length;
+                    int c = 0, si = 0;
+
+                    var bytes = new byte[len];
+
+                    while (si < len)
+                    {
+                        if (len - si > int.MaxValue)
+                            c += int.MaxValue;
+                        else
+                            c += checked((int)(len - si));
+
+                        // Method has a ~2GB limit.
+                        Marshal.Copy(v, bytes, si, c);
+
+                        si += c;
+                    }
                     return bytes;
                 }
                 finally
@@ -243,7 +257,7 @@ namespace LevelDB
         /// </summary>
         public int[] Get(int key)
         {
-            return Get(key, new ReadOptions());
+            return Get(key, ReadOptions.Default);
         }
 
         /// <summary>
@@ -261,10 +275,23 @@ namespace LevelDB
             {
                 try
                 {
-                    var bytes = new int[(long)length / 4];
+                    var len = (long)length / 4;
+                    int c = 0, si = 0;
 
-                    // TODO: consider >2GB-1
-                    Marshal.Copy(v, bytes, 0, checked((int)bytes.LongLength));
+                    var bytes = new int[len];
+
+                    while (si < len)
+                    {
+                        if (len - si > int.MaxValue)
+                            c += int.MaxValue;
+                        else
+                            c += checked((int)(len - si));
+
+                        // Method has a ~2GB limit.
+                        Marshal.Copy(v, bytes, si, c);
+
+                        si += c;
+                    }
                     return bytes;
                 }
                 finally
@@ -292,7 +319,7 @@ namespace LevelDB
         public NativeArray<T> GetRaw<T>(NativeArray key)
             where T : struct
         {
-            return GetRaw<T>(key, new ReadOptions());
+            return GetRaw<T>(key, ReadOptions.Default);
         }
         public NativeArray<T> GetRaw<T>(NativeArray key, ReadOptions options)
             where T : struct
@@ -324,7 +351,7 @@ namespace LevelDB
         /// </summary>
         public Iterator CreateIterator()
         {
-            return this.CreateIterator(new ReadOptions());
+            return this.CreateIterator(ReadOptions.Default);
         }
 
         /// <summary>
@@ -453,7 +480,5 @@ namespace LevelDB
                 iterator.Next();
             }
         }
-
-
     }
 }

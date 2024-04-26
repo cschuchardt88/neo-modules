@@ -20,50 +20,38 @@ namespace Neo.Plugins.Storage
     {
         private readonly DB _db;
         private readonly SnapShot _snapshot;
-        private readonly ReadOptions _options;
         private readonly WriteBatch _batch;
+        private readonly ReadOptions _readOptions;
 
         public Snapshot(DB db)
         {
             this._db = db;
             this._snapshot = db.CreateSnapshot();
-            this._options = new ReadOptions { FillCache = false, Snapshot = _snapshot };
-            this._batch = new WriteBatch();
+            this._batch = new();
+            this._readOptions = new ReadOptions { FillCache = false, Snapshot = _snapshot };
         }
 
-        public void Commit()
-        {
+        public void Commit() =>
             _db.Write(_batch);
-        }
 
-        public void Delete(byte[] key)
-        {
+        public void Delete(byte[] key) =>
             _batch.Delete(key);
-        }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             _snapshot.Dispose();
-        }
 
-        public IEnumerable<(byte[] Key, byte[] Value)> Seek(byte[] prefix, SeekDirection direction = SeekDirection.Forward)
-        {
-            return _db.Seek(_options, prefix, direction, (k, v) => (k, v));
-        }
-
-        public void Put(byte[] key, byte[] value)
-        {
+        public void Put(byte[] key, byte[] value) =>
             _batch.Put(key, value);
-        }
 
-        public bool Contains(byte[] key)
-        {
-            return _db.Contains(key, _options);
-        }
+        public bool Contains(byte[] key) =>
+            _db.Contains(key, _readOptions);
 
-        public byte[] TryGet(byte[] key)
-        {
-            return _db.Get(key, _options);
-        }
+        public byte[] TryGet(byte[] key) =>
+            _db.Get(key, _readOptions);
+
+        public IEnumerable<(byte[] Key, byte[] Value)> Seek(byte[] prefix, SeekDirection direction = SeekDirection.Forward) =>
+            direction == SeekDirection.Forward
+                ? _db.Seek(prefix, new ReadOptions { FillCache = false, })
+                : _db.SeekPrev(prefix, new ReadOptions { FillCache = false, });
     }
 }

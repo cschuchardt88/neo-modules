@@ -9,8 +9,6 @@
 // Redistribution and use in source and binary forms with or without
 // modifications are permitted.
 
-using System;
-
 namespace LevelDB
 {
     /// <summary>
@@ -21,7 +19,10 @@ namespace LevelDB
     /// </summary>
     public class Options : LevelDBHandle
     {
-        private Logger _InfoLog;
+        public static readonly Options Default = new Options();
+
+        private Logger _infoLog;
+
         public Options()
         {
             this.Handle = LevelDBInterop.leveldb_options_create();
@@ -65,9 +66,9 @@ namespace LevelDB
             set
             {
                 LevelDBInterop.leveldb_options_set_info_log(this.Handle, value.Handle);
-                this._InfoLog = value;
+                this._infoLog = value;
             }
-            get { return _InfoLog; }
+            get => _infoLog;
         }
 
         /// <summary>
@@ -188,9 +189,14 @@ namespace LevelDB
             set { LevelDBInterop.leveldb_options_set_compression(this.Handle, (int)value); }
         }
 
+        public int FilterPolicy
+        {
+            set { LevelDBInterop.leveldb_options_set_filter_policy(this.Handle, LevelDBInterop.leveldb_filterpolicy_create_bloom(value)); }
+        }
+
         protected override void FreeUnManagedObjects()
         {
-            if (this.Handle != default(IntPtr))
+            if (this.Handle != default)
                 LevelDBInterop.leveldb_options_destroy(this.Handle);
         }
 

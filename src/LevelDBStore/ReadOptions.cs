@@ -16,7 +16,7 @@ namespace LevelDB
     /// </summary>
     public class ReadOptions : LevelDBHandle
     {
-        public static ReadOptions Default = new ReadOptions();
+        public static readonly ReadOptions Default = new ReadOptions();
 
         public ReadOptions()
         {
