@@ -19,10 +19,6 @@ namespace Neo.IO.Data.LevelDB
     {
         public static IEnumerable<(byte[], byte[])> Seek(this DB db, byte[] prefix, ReadOptions options)
         {
-            using var sn = db.CreateSnapshot();
-
-            options.Snapshot = sn;
-
             using var it = db.CreateIterator(options);
 
             for (it.Seek(prefix); it.IsValid(); it.Next())
@@ -31,10 +27,6 @@ namespace Neo.IO.Data.LevelDB
 
         public static IEnumerable<(byte[], byte[])> SeekPrev(this DB db, byte[] prefix, ReadOptions options)
         {
-            using var sn = db.CreateSnapshot();
-
-            options.Snapshot = sn;
-
             using var it = db.CreateIterator(options);
 
             it.Seek(prefix);

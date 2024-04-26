@@ -29,8 +29,6 @@ namespace Neo.Plugins.Storage
                 // Keep whole blockchain open plus future files
                 // at lease up to block index 10_000_000
                 MaxOpenFiles = 4096,
-                BlockSize = 16 * 1024, // 16K
-                WriteBufferSize = 16 * 1024 * 1024, // 16MB
                 FilterPolicy = 10,
                 CompressionLevel = CompressionLevel.SnappyCompression,
             });
