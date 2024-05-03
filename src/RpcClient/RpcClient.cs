@@ -260,7 +260,7 @@ namespace Neo.Network.RPC
             return new ContractState
             {
                 Id = (int)json["id"].AsNumber(),
-                UpdateCounter = (ushort)json["updatecounter"].AsNumber(),
+                UpdateCounter = (ushort)(json["updatecounter"]?.AsNumber() ?? 0),
                 Hash = UInt160.Parse(json["hash"].AsString()),
                 Nef = RpcNefFile.FromJson((JObject)json["nef"]),
                 Manifest = ContractManifest.FromJson((JObject)json["manifest"])
@@ -270,10 +270,10 @@ namespace Neo.Network.RPC
         /// <summary>
         /// Get all native contracts.
         /// </summary>
-        public async Task<RpcNativeContract[]> GetNativeContractsAsync()
+        public async Task<ContractState[]> GetNativeContractsAsync()
         {
             var result = await RpcSendAsync(GetRpcName()).ConfigureAwait(false);
-            return ((JArray)result).Select(p => RpcNativeContract.FromJson((JObject)p)).ToArray();
+            return ((JArray)result).Select(p => ContractStateFromJson((JObject)p)).ToArray();
         }
 
         /// <summary>
