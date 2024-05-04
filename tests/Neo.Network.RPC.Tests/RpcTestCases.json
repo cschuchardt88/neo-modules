@@ -1037,6 +1037,7 @@
       "result": [
         {
           "id": -1,
+          "updatecounter": 0,
           "hash": "0xa501d7d7d10983673b61b7a2d3a813b36f9f0e43",
           "nef": {
             "magic": 860243278,
@@ -1206,6 +1207,7 @@
         },
         {
           "id": -2,
+          "updatecounter": 1,
           "hash": "0x971d69c6dd10ce88e7dfffec1dc603c6125a8764",
           "nef": {
             "magic": 860243278,
@@ -1303,6 +1305,7 @@
         },
         {
           "id": -3,
+          "updatecounter": 0,
           "hash": "0xef4073a0f2b305a38ec4050e4d3d28bc40ea63f5",
           "nef": {
             "magic": 860243278,
@@ -1507,6 +1510,7 @@
         },
         {
           "id": -4,
+          "updatecounter": 0,
           "hash": "0xd2a4cff31913016155e38e474a2c06d08be276cf",
           "nef": {
             "magic": 860243278,
@@ -1615,6 +1619,7 @@
         },
         {
           "id": -5,
+          "updatecounter": 0,
           "hash": "0x79bcd398505eb779df6e67e4be6c14cded08e2f2",
           "nef": {
             "magic": 860243278,
@@ -1796,6 +1801,7 @@
         },
         {
           "id": -6,
+          "updatecounter": 0,
           "hash": "0x597b1471bbce497b7809e2c8f10db67050008b02",
           "nef": {
             "magic": 860243278,
@@ -1859,6 +1865,7 @@
         },
         {
           "id": -7,
+          "updatecounter": 0,
           "hash": "0x8dc0e742cbdfdeda51ff8a8b78d46829144c80ee",
           "nef": {
             "magic": 860243278,
@@ -1967,6 +1974,7 @@
         },
         {
           "id": -8,
+          "updatecounter": 0,
           "hash": "0xa2b524b68dfe43a9d56af84f443c6b9843b8028c",
           "nef": {
             "magic": 860243278,

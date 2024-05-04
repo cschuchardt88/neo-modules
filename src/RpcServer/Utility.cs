@@ -32,19 +32,5 @@ namespace Neo.Plugins
             json["netfee"] = tx.NetworkFee.ToString();
             return json;
         }
-
-        public static JObject NativeContractToJson(this NativeContract contract, NeoSystem system)
-        {
-            var state = contract.GetContractState(system.Settings,
-                NativeContract.Ledger.CurrentIndex(system.StoreView));
-
-            return new JObject
-            {
-                ["id"] = contract.Id,
-                ["hash"] = contract.Hash.ToString(),
-                ["nef"] = state.Nef.ToJson(),
-                ["manifest"] = state.Manifest.ToJson()
-            };
-        }
     }
 }
