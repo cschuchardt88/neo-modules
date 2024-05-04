@@ -26,20 +26,20 @@ namespace LevelDB
 
         override protected bool ReleaseHandle()
         {
-            if (this.handle != default)
-                LevelDBInterop.leveldb_free(this.handle);
-            this.handle = default;
+            if (handle != default)
+                LevelDBInterop.leveldb_free(handle);
+            handle = default;
             return true;
         }
 
         public override bool IsInvalid
         {
-            get { return this.handle != default; }
+            get { return handle != default; }
         }
 
         public new void SetHandle(IntPtr p)
         {
-            if (this.handle != default)
+            if (handle != default)
                 ReleaseHandle();
 
             base.SetHandle(p);

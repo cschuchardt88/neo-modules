@@ -234,7 +234,7 @@ namespace LevelDB.NativePointer
 
         readonly System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return GetEnumerator();
         }
 
         private class Enumerator(Ptr<T> start, Ptr<T> end, SafeHandle handle) : IEnumerator<T>

@@ -19,12 +19,12 @@ namespace LevelDB
     {
         public Env()
         {
-            this.Handle = LevelDBInterop.leveldb_create_default_env();
+            Handle = LevelDBInterop.leveldb_create_default_env();
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_env_destroy(this.Handle);
+            LevelDBInterop.leveldb_env_destroy(Handle);
         }
     }
 }

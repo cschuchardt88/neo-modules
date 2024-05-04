@@ -23,7 +23,7 @@ namespace Neo.Plugins.Storage
 
         public Store(string dir)
         {
-            this._db = new(dir, new()
+            _db = new(dir, new()
             {
                 CreateIfMissing = true,
                 // Keep whole blockchain open plus future files
@@ -36,7 +36,7 @@ namespace Neo.Plugins.Storage
 
         public Store(string dir, Options options)
         {
-            this._db = new DB(dir, options);
+            _db = new DB(dir, options);
         }
 
         public void Dispose() =>

@@ -23,7 +23,7 @@ namespace LevelDB
 
         internal Iterator(IntPtr Handle, Encoding encoding)
         {
-            this._encoding = encoding;
+            _encoding = encoding;
             this.Handle = Handle;
         }
 
@@ -34,7 +34,7 @@ namespace LevelDB
         /// <returns>This method returns true iff the iterator is valid.</returns>
         public bool IsValid()
         {
-            return (int)LevelDBInterop.leveldb_iter_valid(this.Handle) != 0;
+            return (int)LevelDBInterop.leveldb_iter_valid(Handle) != 0;
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace LevelDB
         /// </summary>
         public void SeekToFirst()
         {
-            LevelDBInterop.leveldb_iter_seek_to_first(this.Handle);
+            LevelDBInterop.leveldb_iter_seek_to_first(Handle);
             Throw();
         }
 
@@ -53,7 +53,7 @@ namespace LevelDB
         /// </summary>
         public void SeekToLast()
         {
-            LevelDBInterop.leveldb_iter_seek_to_last(this.Handle);
+            LevelDBInterop.leveldb_iter_seek_to_last(Handle);
             Throw();
         }
 
@@ -64,7 +64,7 @@ namespace LevelDB
         /// </summary>
         public void Seek(byte[] key)
         {
-            LevelDBInterop.leveldb_iter_seek(this.Handle, key, key.Length);
+            LevelDBInterop.leveldb_iter_seek(Handle, key, key.Length);
             Throw();
         }
 
@@ -85,7 +85,7 @@ namespace LevelDB
         /// </summary>
         public void Seek(int key)
         {
-            LevelDBInterop.leveldb_iter_seek(this.Handle, ref key, 4);
+            LevelDBInterop.leveldb_iter_seek(Handle, ref key, 4);
             Throw();
         }
 
@@ -96,7 +96,7 @@ namespace LevelDB
         /// </summary>
         public void Next()
         {
-            LevelDBInterop.leveldb_iter_next(this.Handle);
+            LevelDBInterop.leveldb_iter_next(Handle);
             Throw();
         }
 
@@ -107,7 +107,7 @@ namespace LevelDB
         /// </summary>
         public void Prev()
         {
-            LevelDBInterop.leveldb_iter_prev(this.Handle);
+            LevelDBInterop.leveldb_iter_prev(Handle);
             Throw();
         }
 
@@ -119,7 +119,7 @@ namespace LevelDB
         public int KeyAsInt()
         {
             int length;
-            var key = LevelDBInterop.leveldb_iter_key(this.Handle, out length);
+            var key = LevelDBInterop.leveldb_iter_key(Handle, out length);
             Throw();
 
             if (length != 4) throw new Exception("Key is not an integer");
@@ -133,7 +133,7 @@ namespace LevelDB
         /// </summary>
         public string KeyAsString()
         {
-            return _encoding.GetString(this.Key());
+            return _encoding.GetString(Key());
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace LevelDB
         public byte[] Key()
         {
             int length;
-            var key = LevelDBInterop.leveldb_iter_key(this.Handle, out length);
+            var key = LevelDBInterop.leveldb_iter_key(Handle, out length);
             Throw();
 
             var bytes = new byte[length];
@@ -158,7 +158,7 @@ namespace LevelDB
         public int[] ValueAsInts()
         {
             int length;
-            var value = LevelDBInterop.leveldb_iter_value(this.Handle, out length);
+            var value = LevelDBInterop.leveldb_iter_value(Handle, out length);
             Throw();
 
             var bytes = new int[length / 4];
@@ -172,7 +172,7 @@ namespace LevelDB
         /// </summary>
         public string ValueAsString()
         {
-            return _encoding.GetString(this.Value());
+            return _encoding.GetString(Value());
         }
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace LevelDB
         public byte[] Value()
         {
             int length;
-            var value = LevelDBInterop.leveldb_iter_value(this.Handle, out length);
+            var value = LevelDBInterop.leveldb_iter_value(Handle, out length);
             Throw();
 
             var bytes = new byte[length];
@@ -204,13 +204,13 @@ namespace LevelDB
         void Throw(Func<string, Exception> exception)
         {
             IntPtr error;
-            LevelDBInterop.leveldb_iter_get_error(this.Handle, out error);
+            LevelDBInterop.leveldb_iter_get_error(Handle, out error);
             if (error != IntPtr.Zero) throw exception(Marshal.PtrToStringAnsi(error));
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_iter_destroy(this.Handle);
+            LevelDBInterop.leveldb_iter_destroy(Handle);
         }
     }
 }

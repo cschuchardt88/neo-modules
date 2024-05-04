@@ -33,12 +33,12 @@ namespace LevelDB
         /// </summary>
         public Cache(int capacity)
         {
-            this.Handle = LevelDBInterop.leveldb_cache_create_lru(capacity);
+            Handle = LevelDBInterop.leveldb_cache_create_lru(capacity);
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_cache_destroy(this.Handle);
+            LevelDBInterop.leveldb_cache_destroy(Handle);
         }
     }
 }

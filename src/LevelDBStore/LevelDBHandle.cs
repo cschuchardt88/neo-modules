@@ -44,10 +44,10 @@ namespace LevelDB
                 {
                     FreeManagedObjects();
                 }
-                if (this.Handle != IntPtr.Zero)
+                if (Handle != IntPtr.Zero)
                 {
                     FreeUnManagedObjects();
-                    this.Handle = IntPtr.Zero;
+                    Handle = IntPtr.Zero;
                 }
                 _disposed = true;
             }

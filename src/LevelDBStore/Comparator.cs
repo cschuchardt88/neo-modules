@@ -41,7 +41,7 @@ namespace LevelDB
 
                           @this.Dispose();
 
-                          // TODO: At the point 'Free' is entered, this delegate may become elligible to be GC'd.
+                          // TODO: At the point 'Free' is entered, this delegate may become eligible to be GC'd.
                           // TODO:  Need to look whether GC might run between then, and when this delegate returns.
                           h.Free();
                       };
@@ -67,9 +67,9 @@ namespace LevelDB
             public IntPtr Init(string name, Func<NativeArray, NativeArray, int> cmp)
             {
                 // TODO: Complete member initialization
-                this._cmp = cmp;
+                _cmp = cmp;
 
-                this._namePinned = GCHandle.Alloc(
+                _namePinned = GCHandle.Alloc(
                     Encoding.ASCII.GetBytes(name),
                     GCHandleType.Pinned);
 
@@ -92,7 +92,7 @@ namespace LevelDB
                 get
                 {
                     // TODO: this is probably not the most effective way to get a pinned string
-                    var s = ((byte[])this._namePinned.Target);
+                    var s = ((byte[])_namePinned.Target);
                     fixed (byte* p = s)
                     {
                         // Note: pinning the GCHandle ensures this value should remain stable 
@@ -104,8 +104,8 @@ namespace LevelDB
 
             public void Dispose()
             {
-                if (this._namePinned.IsAllocated)
-                    this._namePinned.Free();
+                if (_namePinned.IsAllocated)
+                    _namePinned.Free();
             }
         }
 
@@ -114,11 +114,11 @@ namespace LevelDB
             var inner = new Inner();
             try
             {
-                this.Handle = inner.Init(name, cmp);
+                Handle = inner.Init(name, cmp);
             }
             finally
             {
-                if (this.Handle == default)
+                if (Handle == default)
                     inner.Dispose();
             }
         }
@@ -134,10 +134,10 @@ namespace LevelDB
 
         protected override void FreeUnManagedObjects()
         {
-            if (this.Handle != default)
+            if (Handle != default)
             {
                 // indirectly invoked CleanupInner
-                LevelDBInterop.leveldb_comparator_destroy(this.Handle);
+                LevelDBInterop.leveldb_comparator_destroy(Handle);
             }
         }
     }

@@ -25,7 +25,7 @@ namespace LevelDB
 
         public Options()
         {
-            this.Handle = LevelDBInterop.leveldb_options_create();
+            Handle = LevelDBInterop.leveldb_options_create();
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace LevelDB
         /// </summary>
         public bool CreateIfMissing
         {
-            set { LevelDBInterop.leveldb_options_set_create_if_missing(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_options_set_create_if_missing(Handle, value ? (byte)1 : (byte)0); }
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace LevelDB
         /// </summary>
         public bool ErrorIfExists
         {
-            set { LevelDBInterop.leveldb_options_set_error_if_exists(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_options_set_error_if_exists(Handle, value ? (byte)1 : (byte)0); }
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace LevelDB
         /// </summary>
         public bool ParanoidChecks
         {
-            set { LevelDBInterop.leveldb_options_set_paranoid_checks(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_options_set_paranoid_checks(Handle, value ? (byte)1 : (byte)0); }
         }
 
         /// <summary>
@@ -65,8 +65,8 @@ namespace LevelDB
         {
             set
             {
-                LevelDBInterop.leveldb_options_set_info_log(this.Handle, value.Handle);
-                this._infoLog = value;
+                LevelDBInterop.leveldb_options_set_info_log(Handle, value.Handle);
+                _infoLog = value;
             }
             get => _infoLog;
         }
@@ -79,8 +79,8 @@ namespace LevelDB
         {
             set
             {
-                LevelDBInterop.leveldb_options_set_env(this.Handle, value.Handle);
-                this._Env = value;
+                LevelDBInterop.leveldb_options_set_env(Handle, value.Handle);
+                _Env = value;
             }
             get { return _Env; }
         }
@@ -103,7 +103,7 @@ namespace LevelDB
         /// </summary>
         public long WriteBufferSize
         {
-            set { LevelDBInterop.leveldb_options_set_write_buffer_size(this.Handle, value); }
+            set { LevelDBInterop.leveldb_options_set_write_buffer_size(Handle, value); }
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace LevelDB
         /// </summary>
         public int MaxOpenFiles
         {
-            set { LevelDBInterop.leveldb_options_set_max_open_files(this.Handle, value); }
+            set { LevelDBInterop.leveldb_options_set_max_open_files(Handle, value); }
         }
 
         /// <summary>
@@ -128,8 +128,8 @@ namespace LevelDB
         {
             set
             {
-                LevelDBInterop.leveldb_options_set_cache(this.Handle, value.Handle);
-                this._Cache = value;
+                LevelDBInterop.leveldb_options_set_cache(Handle, value.Handle);
+                _Cache = value;
             }
             get { return _Cache; }
         }
@@ -138,8 +138,8 @@ namespace LevelDB
         {
             set
             {
-                LevelDBInterop.leveldb_options_set_comparator(this.Handle, value.Handle);
-                this._Comparator = value;
+                LevelDBInterop.leveldb_options_set_comparator(Handle, value.Handle);
+                _Comparator = value;
             }
             get { return _Comparator; }
         }
@@ -154,7 +154,7 @@ namespace LevelDB
         /// </summary>
         public long BlockSize
         {
-            set { LevelDBInterop.leveldb_options_set_block_size(this.Handle, value); }
+            set { LevelDBInterop.leveldb_options_set_block_size(Handle, value); }
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace LevelDB
         /// </summary>
         public int RestartInterval
         {
-            set { LevelDBInterop.leveldb_options_set_block_restart_interval(this.Handle, value); }
+            set { LevelDBInterop.leveldb_options_set_block_restart_interval(Handle, value); }
         }
 
         /// <summary>
@@ -186,18 +186,18 @@ namespace LevelDB
         /// </summary>
         public CompressionLevel CompressionLevel
         {
-            set { LevelDBInterop.leveldb_options_set_compression(this.Handle, (int)value); }
+            set { LevelDBInterop.leveldb_options_set_compression(Handle, (int)value); }
         }
 
         public int FilterPolicy
         {
-            set { LevelDBInterop.leveldb_options_set_filter_policy(this.Handle, LevelDBInterop.leveldb_filterpolicy_create_bloom(value)); }
+            set { LevelDBInterop.leveldb_options_set_filter_policy(Handle, LevelDBInterop.leveldb_filterpolicy_create_bloom(value)); }
         }
 
         protected override void FreeUnManagedObjects()
         {
-            if (this.Handle != default)
-                LevelDBInterop.leveldb_options_destroy(this.Handle);
+            if (Handle != default)
+                LevelDBInterop.leveldb_options_destroy(Handle);
         }
 
         #region "managed wrappers -- must be detached upon successful DB.Create"

@@ -25,10 +25,10 @@ namespace Neo.Plugins.Storage
 
         public Snapshot(DB db)
         {
-            this._db = db;
-            this._snapshot = db.CreateSnapshot();
-            this._batch = new();
-            this._readOptions = new ReadOptions { FillCache = false, Snapshot = _snapshot };
+            _db = db;
+            _snapshot = db.CreateSnapshot();
+            _batch = new();
+            _readOptions = new ReadOptions { FillCache = false, Snapshot = _snapshot };
         }
 
         public void Commit() =>

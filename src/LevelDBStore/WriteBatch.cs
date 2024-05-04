@@ -37,8 +37,8 @@ namespace LevelDB
 
         public WriteBatch(Encoding encoding)
         {
-            this._encoding = encoding;
-            this.Handle = LevelDBInterop.leveldb_writebatch_create();
+            _encoding = encoding;
+            Handle = LevelDBInterop.leveldb_writebatch_create();
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace LevelDB
         /// </summary>
         public void Clear()
         {
-            LevelDBInterop.leveldb_writebatch_clear(this.Handle);
+            LevelDBInterop.leveldb_writebatch_clear(Handle);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace LevelDB
         /// </summary>
         public WriteBatch Put(byte[] key, byte[] value)
         {
-            LevelDBInterop.leveldb_writebatch_put(this.Handle, key, key.Length, value, value.Length);
+            LevelDBInterop.leveldb_writebatch_put(Handle, key, key.Length, value, value.Length);
             return this;
         }
 
@@ -81,7 +81,7 @@ namespace LevelDB
         /// </summary>
         public WriteBatch Delete(byte[] key)
         {
-            LevelDBInterop.leveldb_writebatch_delete(this.Handle, key, key.Length);
+            LevelDBInterop.leveldb_writebatch_delete(Handle, key, key.Length);
             return this;
         }
 
@@ -90,12 +90,12 @@ namespace LevelDB
         /// </summary>
         public void Iterate(object state, Action<object, byte[], int, byte[], int> put, Action<object, byte[], int> deleted)
         {
-            LevelDBInterop.leveldb_writebatch_iterate(this.Handle, state, put, deleted);
+            LevelDBInterop.leveldb_writebatch_iterate(Handle, state, put, deleted);
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_writebatch_destroy(this.Handle);
+            LevelDBInterop.leveldb_writebatch_destroy(Handle);
         }
 
     }

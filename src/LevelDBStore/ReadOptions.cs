@@ -20,7 +20,7 @@ namespace LevelDB
 
         public ReadOptions()
         {
-            this.Handle = LevelDBInterop.leveldb_readoptions_create();
+            Handle = LevelDBInterop.leveldb_readoptions_create();
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace LevelDB
         /// </summary>
         public bool VerifyCheckSums
         {
-            set { LevelDBInterop.leveldb_readoptions_set_verify_checksums(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_readoptions_set_verify_checksums(Handle, value ? (byte)1 : (byte)0); }
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace LevelDB
         /// </summary>
         public bool FillCache
         {
-            set { LevelDBInterop.leveldb_readoptions_set_fill_cache(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_readoptions_set_fill_cache(Handle, value ? (byte)1 : (byte)0); }
         }
 
         /// <summary>
@@ -51,12 +51,12 @@ namespace LevelDB
         /// </summary>
         public SnapShot Snapshot
         {
-            set { LevelDBInterop.leveldb_readoptions_set_snapshot(this.Handle, value.Handle); }
+            set { LevelDBInterop.leveldb_readoptions_set_snapshot(Handle, value.Handle); }
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_readoptions_destroy(this.Handle);
+            LevelDBInterop.leveldb_readoptions_destroy(Handle);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace LevelDB
         internal SnapShot(IntPtr Handle, DB parent)
         {
             this.Handle = Handle;
-            this.Parent = new WeakReference(parent);
+            Parent = new WeakReference(parent);
         }
 
         internal SnapShot(IntPtr Handle)
@@ -39,7 +39,7 @@ namespace LevelDB
             if (Parent.IsAlive)
             {
                 var parent = Parent.Target as DB;
-                if (parent != null) LevelDBInterop.leveldb_release_snapshot(parent.Handle, this.Handle);
+                if (parent != null) LevelDBInterop.leveldb_release_snapshot(parent.Handle, Handle);
             }
         }
     }

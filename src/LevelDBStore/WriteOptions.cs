@@ -21,7 +21,7 @@ namespace LevelDB
 
         public WriteOptions()
         {
-            this.Handle = LevelDBInterop.leveldb_writeoptions_create();
+            Handle = LevelDBInterop.leveldb_writeoptions_create();
         }
 
         /// <summary>
@@ -42,12 +42,12 @@ namespace LevelDB
         /// </summary>
         public bool Sync
         {
-            set { LevelDBInterop.leveldb_writeoptions_set_sync(this.Handle, value ? (byte)1 : (byte)0); }
+            set { LevelDBInterop.leveldb_writeoptions_set_sync(Handle, value ? (byte)1 : (byte)0); }
         }
 
         protected override void FreeUnManagedObjects()
         {
-            LevelDBInterop.leveldb_writeoptions_destroy(this.Handle);
+            LevelDBInterop.leveldb_writeoptions_destroy(Handle);
         }
     }
 }
